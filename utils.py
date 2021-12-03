@@ -1,7 +1,13 @@
 import numpy as np
 import sklearn as sk
+
+from filterbanks import filter_banks
+from scikit_talkbox_lpc import lpc_ref
 from xcorr import *
 from sklearn import preprocessing
+import filterbanks
+
+import scipy.signal as signal
 
 
 # ************************ PRE PROCESSING ************************
@@ -23,10 +29,6 @@ def normalisation(signal):
 
    return normalized_signal
 
-
-def split(width,step,Fe,signal):
-
-   return 0
 
 
 def split(Signal, Fe, Tss, Tw):
@@ -125,7 +127,7 @@ def Autocorr(Es, Signal, Fe):
          lags, c = xcorr(SignalArr, maxlags=int(Fe / 50))  # on utilise la fonction donner sur moodle
          # plt.plot(c)
          # on cherche les maxima
-         maxima, value = sgl.find_peaks(c, height=0,
+         maxima, value = signal.find_peaks(c, height=0,
                                         distance=45)  # on utilise la fonction"find peaks" de la librairie "scipy"
 
          #     Mvalue = value['peak_heights']# Lorsqu on lit les "values", cela nous affiche {'peak_heights':array([... ])} et on veut juste array
@@ -209,3 +211,37 @@ def Cepstrum(Signal, Fe, threshold):  # threshold = seuil
    return Cepstrumlist
 
 
+
+
+def MFCC(signal,Fe):
+
+   for i in range(len(signal)):
+
+      #We pre-emphasize the signal with the same equation as 2.3 (but here alpha = 0.97) :
+      signal_emp = np.array(signal.lfilter([1., -0.97], 1, signal[i - 1]))
+
+
+
+   #we split the signal :
+   frameslist = split(signal_emp,Fe,15,30)
+
+   #we apply a hamming window on every frame
+   for i in range(len(frameslist)):
+      frame_hamm = signal.hamming(len(frameslist[i]))
+      frameslist[i] *= frame_hamm
+
+   #the power spectrum of the signal :
+   NDFT = 512
+   P = []
+   P= [(np.abs(signal.fft(frameslist[i]))**2)/NDFT for i in range(len(frameslist))]
+
+   #we use Mel-Filter Bank
+   filter_banks = filterbanks.filter_banks(P,Fe)
+
+   #we apply a Discrete Cosine Transform
+   signal.dct(filter_banks,norm = 'ortho')
+
+   #in general, we take the first 13 values :
+   listend = [filterbanks[:,1:13]]
+
+   return listend
