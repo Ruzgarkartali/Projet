@@ -5,7 +5,7 @@ from sklearn import preprocessing
 
 
 # ************************ PRE PROCESSING ************************
-
+#1.1
 # l'objectif de la normalisation est de réduire le vecteur signal pour que chaque donnée soit représenté comme un pourcentage
 # de la plus grande(petite) valeur (pour ca qu'on aura un vecteur entre -1 et 1)
 #voir dans la fonction main le test
@@ -23,10 +23,10 @@ def normalisation(signal):
 
    return normalized_signal
 
+#1.2
+#def split(width,step,Fe,signal):
 
-def split(width,step,Fe,signal):
-
-   return 0
+#return 0
 
 
 def split(Signal, Fe, Tss, Tw):
@@ -90,7 +90,7 @@ def split(Signal, Fe, Tss, Tw):
 
    return Frameslist
 
-
+#2.1
 def signalenergy(signal):
 
    energy = sum(signal**2)
@@ -109,7 +109,7 @@ def FrameEnergy(Frameslist):
 
    return E
 
-
+#2.2.1
 def Autocorr(Es, Signal, Fe):
    # initialisation
    Pitchlist = []
@@ -151,7 +151,7 @@ def Autocorr(Es, Signal, Fe):
 
    return Pitchlist
 
-
+#2.2.2
 def Compute_cepstrum(Signal, Frqsample):
 
    Framesize = Signal.size
@@ -208,4 +208,4 @@ def Cepstrum(Signal, Fe, threshold):  # threshold = seuil
    CepstrumMoy = abs(np.mean(CepstrumArr))
    return Cepstrumlist
 
-
+#2.3
