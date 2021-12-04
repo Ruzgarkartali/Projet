@@ -1,11 +1,15 @@
 import numpy as np
 import sklearn as sk
+
+from scikit_talkbox_lpc import lpc_ref
 from xcorr import *
 from sklearn import preprocessing
+import filterbanks
+import scipy.signal as signal
 
 
 # ************************ PRE PROCESSING ************************
-
+#1.1
 # l'objectif de la normalisation est de réduire le vecteur signal pour que chaque donnée soit représenté comme un pourcentage
 # de la plus grande(petite) valeur (pour ca qu'on aura un vecteur entre -1 et 1)
 #voir dans la fonction main le test
@@ -23,10 +27,10 @@ def normalisation(signal):
 
    return normalized_signal
 
+#1.2
+#def split(width,step,Fe,signal):
 
-def split(width,step,Fe,signal):
-
-   return 0
+#return 0
 
 
 def split(Signal, Fe, Tss, Tw):
@@ -90,7 +94,7 @@ def split(Signal, Fe, Tss, Tw):
 
    return Frameslist
 
-
+#2.1
 def signalenergy(signal):
 
    energy = sum(signal**2)
@@ -109,7 +113,7 @@ def FrameEnergy(Frameslist):
 
    return E
 
-
+#2.2.1
 def Autocorr(Es, Signal, Fe):
    # initialisation
    Pitchlist = []
@@ -125,7 +129,7 @@ def Autocorr(Es, Signal, Fe):
          lags, c = xcorr(SignalArr, maxlags=int(Fe / 50))  # on utilise la fonction donner sur moodle
          # plt.plot(c)
          # on cherche les maxima
-         maxima, value = sgl.find_peaks(c, height=0,
+         maxima, value = signal.find_peaks(c, height=0,
                                         distance=45)  # on utilise la fonction"find peaks" de la librairie "scipy"
 
          #     Mvalue = value['peak_heights']# Lorsqu on lit les "values", cela nous affiche {'peak_heights':array([... ])} et on veut juste array
@@ -151,7 +155,7 @@ def Autocorr(Es, Signal, Fe):
 
    return Pitchlist
 
-
+#2.2.2
 def Compute_cepstrum(Signal, Frqsample):
 
    Framesize = Signal.size
@@ -208,4 +212,74 @@ def Cepstrum(Signal, Fe, threshold):  # threshold = seuil
    CepstrumMoy = abs(np.mean(CepstrumArr))
    return Cepstrumlist
 
+#2.3
+def formant(signal, fe):
+   f = []
+   temp = []
+   # 1
+   for i in range(len(signal)):
+
+   # 2
+      HPfilter = np.array(signal.lfilter([1., -0.67], 1, signal[i - 1]))
+
+
+   # 3
+      frame_hamm = HPfilter * signal.hamming(len(HPfilter))
+
+   # 4
+      lpc_coeff = lpc_ref(frame_hamm, (2 + int(fe / 1000)))
+
+   # 5
+      complex = np.roots(lpc_coeff)
+
+      complex = [r for r in complex if np.imag(r) > 0]
+
+      angles = np.array(np.angle(complex))
+
+
+      angles_sort = sorted(angles * (fe / (2 * np.pi)))
+      for i in range(1):
+         temp.append(angles_sort[i])
+
+      f.append(temp)
+      temp = []
+
+   return f
+
+#2.4
+def MFCC(signal,Fe):
+
+   for i in range(len(signal)):
+
+      #We pre-emphasize the signal with the same equation as 2.3 (but here alpha = 0.97) :
+      signal_emp = np.array(signal.lfilter([1., -0.97], 1, signal[i - 1]))
+
+
+
+   #we split the signal :
+   frameslist = split(signal_emp,Fe,15,30)
+
+   #we apply a hamming window on every frame
+   for i in range(len(frameslist)):
+      frame_hamm = signal.hamming(len(frameslist[i]))
+      frameslist[i] *= frame_hamm
+
+   #the power spectrum of the signal :
+   NDFT = 512
+   P = []
+   P= [(np.abs(signal.fft(frameslist[i]))**2)/NDFT for i in range(len(frameslist))]
+
+   #we use Mel-Filter Bank
+   filter_banks = filterbanks.filter_banks(P,Fe)
+
+   #we apply a Discrete Cosine Transform
+   signal.dct(filter_banks,norm = 'ortho')
+
+   #in general, we take the first 13 values :
+   listend = [filter_banks[:,1:13]]
+
+   return listend
+
+
+#reste la partie 3 et le les test et le Main
 
