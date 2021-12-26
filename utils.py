@@ -19,6 +19,7 @@ def normalisation(signal):
    # on met tous les éléments du tableau en valeur absolue pour avoir plus facilement accès à la valeur la plus grande
    abs_signal = np.abs(signal)
 
+
    #on trouve la valeur la plus grande
    max = np.max(abs_signal)
 
@@ -270,13 +271,13 @@ def MFCC(signal,Fe):
    P= [(np.abs(signal.fft(frameslist[i]))**2)/NDFT for i in range(len(frameslist))]
 
    #we use Mel-Filter Bank
-   filter_banks = filterbanks.filter_banks(P,Fe)
+   fb = filterbanks.filter_banks(P,Fe)
 
    #we apply a Discrete Cosine Transform
-   signal.dct(filter_banks,norm = 'ortho')
+   signal.dct(fb,norm = 'ortho')
 
    #in general, we take the first 13 values :
-   listend = [filter_banks[:,1:13]]
+   listend = [fb[:,1:13]]
 
    return listend
 

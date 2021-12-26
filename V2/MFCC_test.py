@@ -1,41 +1,44 @@
 import numpy as np
 import scipy.signal as sgl
-from utils import split,filter_banks,dct
+from utils import *
 import matplotlib.pyplot as plt
 
 
-def MFCC(Signal, Fe):
-    Signal = np.asarray(Signal)
-    
-        
-    Signal_emp = np.array(Signal.lfilter([1., -0.97], 1, Signal))
-    Signal_emp.tolist()
-    
-    # 2
-    frameslist = split(Signal_emp, Fe, 15, 30)
-    frameslist = np.array(frameslist)
-    
-    # 3
-    for i in range(len(frameslist)):
-      frame_hamm = sgl.hamming(len(frameslist[i]))
+def MFCC(signal,Fe):
+
+   for i in range(len(signal)):
+
+      #We pre-emphasize the signal with the same equation as 2.3 (but here alpha = 0.97) :
+      sig_fil= signal.lfilter([1., -0.97],1, signal[i - 1])))
+      signal_emp = np.array(sig_fil, 1, signal[i - 1]))
+
+
+
+   #we split the signal :
+   frameslist = split(signal_emp,Fe,15,30)
+
+   #we apply a hamming window on every frame
+   for i in range(len(frameslist)):
+      frame_hamm = signal.hamming(len(frameslist[i]))
       frameslist[i] *= frame_hamm
 
-    # 4
-    NFFT = 512
-    P = []
-    P= [(np.abs(Signal.fft(frameslist[i]))**2)/NFFT for i in range(len(frameslist))]
+   #the power spectrum of the signal :
+   NDFT = 512
+   P = []
+   P= [(np.abs(signal.fft(frameslist[i]))**2)/NDFT for i in range(len(frameslist))]
+
+   #we use Mel-Filter Bank
+   fb = filterbanks.filter_banks(P,Fe)
+
+   #we apply a Discrete Cosine Transform
+   signal.dct(fb,norm = 'ortho')
+
+   #in general, we take the first 13 values :
+   listend = [fb[:,1:13]]
+
+   return listend
 
 
-    # 5
-    Temp=(len(frameslist[0])*2)-1
-    Filterbanks = filter_banks(P, Fe, nfilt = 40, NFFT = Temp) 
-    
-    # 6
-    MFCCVect = dct(Filterbanks,type=2,axis=1,norm ='ortho') 
-    # 7
-    LastMFCC = MFCCVect[:, 0:12]
-    plt.plot(MFCCVect)
-    return LastMFCC    
 
 F1 = 100
 F2 = 500
@@ -50,7 +53,9 @@ for t in range(1000):
     S1.append(np.sin(2*np.pi*F1*(t/Fe)))
     S2.append(np.sin(2*np.pi*F2*(t/Fe)))
     S3.append(np.sin(2*np.pi*F3*(t/Fe)))
+
+l = MFCC(S1,Fe)
    
-print("f1 = "+str(MFCC(S1,Fe)))
+print("f1 = ",l)
 #print("f2 = "+str(MFCC(s2,fe)))
 #print("f3 = "+str(MFCC(s3,fe)))
